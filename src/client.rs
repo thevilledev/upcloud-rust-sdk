@@ -1,5 +1,4 @@
-use reqwest::{Client as ReqwestClient, RequestBuilder};
-use std::time::Duration;
+use reqwest::Client as ReqwestClient;
 
 use crate::constants::{API_BASE_URL, API_VERSION, VERSION};
 use crate::config::Config;
@@ -27,15 +26,28 @@ impl Client {
         self.request(reqwest::Method::GET, path, Option::<&()>::None).await
     }
 
-    pub(crate) async fn post<T: serde::Serialize>(
+    pub(crate) async fn post<T: serde::Serialize + std::fmt::Debug>(
         &self,
         path: &str,
         body: Option<&T>,
     ) -> Result<String, Error> {
+        println!("POST: {:?}", body);
         self.request(reqwest::Method::POST, path, body).await
     }
 
-    async fn request<T: serde::Serialize>(
+    pub(crate) async fn put<T: serde::Serialize + std::fmt::Debug>(
+        &self,
+        path: &str,
+        body: Option<&T>,
+    ) -> Result<String, Error> {
+        self.request(reqwest::Method::PUT, path, body).await
+    }
+
+    pub(crate) async fn delete(&self, path: &str) -> Result<String, Error> {
+        self.request(reqwest::Method::DELETE, path, Option::<&()>::None).await
+    }
+
+    async fn request<T: serde::Serialize + std::fmt::Debug>(
         &self,
         method: reqwest::Method,
         path: &str,
@@ -54,9 +66,11 @@ impl Client {
 
         if let Some(body) = body {
             builder = builder.json(body);
+            println!("BODY: {:?}", body);
         }
 
         let response = builder.send().await?;
+        println!("RESPONSE: {:?}", response);
         
         if !response.status().is_success() {
             return Err(Error::ApiError {

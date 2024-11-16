@@ -8,6 +8,7 @@ pub enum Error {
         message: String,
     },
     SerdeError(serde_json::Error),
+    Timeout,
 }
 
 impl fmt::Display for Error {
@@ -18,6 +19,7 @@ impl fmt::Display for Error {
                 write!(f, "API error ({}): {}", status, message)
             }
             Error::SerdeError(e) => write!(f, "Serialization error: {}", e),
+            Error::Timeout => write!(f, "Request timed out"),
         }
     }
 }
