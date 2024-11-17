@@ -237,7 +237,6 @@ impl CreateServerRequest {
         self
     }
 
-    // Builder pattern methods for optional fields
     pub fn with_plan(mut self, plan: String) -> Self {
         self.plan = Some(plan);
         self
@@ -442,9 +441,34 @@ pub struct IPAddressWrapper {
 pub struct LoginUser {
     pub username: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub ssh_keys: Option<Vec<String>>,
+    pub ssh_keys: Option<SSHKey>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub create_password: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SSHKey {
+    pub ssh_key: Vec<String>,
+}
+
+impl LoginUser {
+    pub fn new(username: impl Into<String>) -> Self {
+        Self {
+            username: username.into(),
+            ssh_keys: None,
+            create_password: Some("yes".to_string()),
+        }
+    }
+
+    pub fn with_ssh_keys(mut self, keys: Vec<String>) -> Self {
+        self.ssh_keys = Some(SSHKey { ssh_key: keys });
+        self
+    }
+
+    pub fn with_create_password(mut self, create: bool) -> Self {
+        self.create_password = Some(if create { "yes" } else { "no" }.to_string());
+        self
+    }
 }
 
 impl Default for LoginUser {

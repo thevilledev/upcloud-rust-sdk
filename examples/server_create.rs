@@ -2,6 +2,9 @@ use upcloud_rust_sdk::{config::Config, client::Client};
 use upcloud_rust_sdk::types::server::*;
 use std::time::Duration;
 
+pub const SSH_USER: &str = "admin";
+pub const SSH_KEY: &str = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINVn5Alm7dObCxo7Z03jyOIZWbcTms7VX3KxastNZHm8 foo@example.tld";
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::new(
@@ -16,6 +19,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_hostname("test-server.example.com".to_string())
         .with_zone("fi-hel1".to_string())
         .with_plan("1xCPU-2GB".to_string())
+        .with_login_user(
+            LoginUser::new(SSH_USER)
+                .with_create_password(false)
+                .with_ssh_keys(vec![SSH_KEY.to_string()])
+        )
         .with_storage_device(CreateServerStorageDevice::new(
             CREATE_SERVER_STORAGE_DEVICE_ACTION_CLONE.to_string(),
             "01000000-0000-4000-8000-000020070100".to_string())
@@ -41,14 +49,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }]
             }
         })
-        .with_login_user(LoginUser {
-            username: "admin".to_string(),
-            ssh_keys: None,
-            create_password: Some("yes".to_string()),
-        })
         .with_password_delivery(PASSWORD_DELIVERY_SMS.to_string())
         .with_metadata("yes".to_string())
         .build();
+
+    #[cfg(debug_assertions)]
+    println!("Create request: {:?}", create_request);
 
     let res = client.create_server(&create_request).await?;
 
