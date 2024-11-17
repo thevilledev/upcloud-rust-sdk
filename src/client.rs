@@ -9,7 +9,17 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(config: Config) -> Result<Self, Error> {
+    pub fn new() -> Result<Self, Error> {
+        let config = Config::new(
+            std::env::var("UPCLOUD_USERNAME")
+                .map_err(|_| Error::ConfigError("UPCLOUD_USERNAME environment variable not set".to_string()))?,
+            std::env::var("UPCLOUD_PASSWORD")
+                .map_err(|_| Error::ConfigError("UPCLOUD_PASSWORD environment variable not set".to_string()))?
+        );
+        Self::with_config(config)
+    }
+
+    pub fn with_config(config: Config) -> Result<Self, Error> {
         let mut client_builder = ReqwestClient::builder()
             .user_agent(format!("upcloud-rust-sdk/{}", VERSION));
 

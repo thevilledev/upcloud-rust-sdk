@@ -9,6 +9,7 @@ pub enum Error {
     },
     SerdeError(serde_json::Error),
     Timeout,
+    ConfigError(String),
 }
 
 impl fmt::Display for Error {
@@ -20,6 +21,7 @@ impl fmt::Display for Error {
             }
             Error::SerdeError(e) => write!(f, "Serialization error: {}", e),
             Error::Timeout => write!(f, "Request timed out"),
+            Error::ConfigError(e) => write!(f, "Config error: {}", e),
         }
     }
 }

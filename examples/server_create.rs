@@ -1,17 +1,15 @@
-use upcloud_rust_sdk::{config::Config, client::Client};
+use upcloud_rust_sdk::client::Client;
 use upcloud_rust_sdk::types::server::*;
 use std::time::Duration;
+
+// Remember to define UPCLOUD_USERNAME and UPCLOUD_PASSWORD environment variables
 
 pub const SSH_USER: &str = "admin";
 pub const SSH_KEY: &str = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINVn5Alm7dObCxo7Z03jyOIZWbcTms7VX3KxastNZHm8 foo@example.tld";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::new(
-        &std::env::var("UPCLOUD_USERNAME").expect("UPCLOUD_USERNAME must be set"),
-        &std::env::var("UPCLOUD_PASSWORD").expect("UPCLOUD_PASSWORD must be set")
-    );
-    let client = Client::new(config)?;
+    let client = Client::new()?;
 
     // Create a new server
     let create_request = CreateServerRequest::new()
