@@ -30,7 +30,7 @@ impl Client {
 
     // Add other server-related methods here
 
-    pub async fn create_server(&self, request: &CreateServerRequestWrapper) -> Result<ServerDetails, Error> {
+    pub async fn create_server(&self, request: &CreateServerRequest) -> Result<ServerDetails, Error> {
         let response = self.post("/server", Some(request)).await?;
 
         #[cfg(debug_assertions)]

@@ -163,7 +163,7 @@ pub struct ServerNetworking {
 }
 
 #[derive(Debug, Default, Serialize)]
-pub struct CreateServerRequest {
+pub struct ServerRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub avoid_host: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -213,8 +213,8 @@ pub struct CreateServerRequest {
 }
 
 #[derive(Debug, Default, Serialize)]
-pub struct CreateServerRequestWrapper {
-    pub server: CreateServerRequest,
+pub struct CreateServerRequest {
+    pub server: ServerRequest,
 }
 
 impl CreateServerRequest {
@@ -223,112 +223,112 @@ impl CreateServerRequest {
     }
 
     pub fn with_zone(mut self, zone: impl Into<String>) -> Self {
-        self.zone = zone.into();
+        self.server.zone = zone.into();
         self
     }
 
     pub fn with_hostname(mut self, hostname: impl Into<String>) -> Self {
-        self.hostname = hostname.into();
+        self.server.hostname = hostname.into();
         self
     }
 
     pub fn with_title(mut self, title: impl Into<String>) -> Self {
-        self.title = title.into();
+        self.server.title = title.into();
         self
     }
 
-    pub fn with_plan(mut self, plan: String) -> Self {
-        self.plan = Some(plan);
+    pub fn with_plan(mut self, plan: impl Into<String>) -> Self {
+        self.server.plan = Some(plan.into());
         self
     }
 
     pub fn with_core_number(mut self, core_number: i32) -> Self {
-        self.core_number = Some(core_number);
+        self.server.core_number = Some(core_number);
         self
     }
 
     pub fn with_memory_amount(mut self, memory_amount: i32) -> Self {
-        self.memory_amount = Some(memory_amount);
+        self.server.memory_amount = Some(memory_amount);
         self
     }
 
     pub fn with_storage_device(mut self, device: CreateServerStorageDevice) -> Self {
-        self.storage_devices.storage_device.push(device);
+        self.server.storage_devices.storage_device.push(device);
         self
     }
 
     pub fn with_networking(mut self, networking: CreateServerNetworking) -> Self {
-        self.networking = Some(networking);
+        self.server.networking = Some(networking);
         self
     }
 
     pub fn with_login_user(mut self, login_user: LoginUser) -> Self {
-        self.login_user = login_user;
+        self.server.login_user = login_user;
         self
     }
 
     pub fn with_user_data(mut self, user_data: String) -> Self {
-        self.user_data = Some(user_data);
+        self.server.user_data = Some(user_data);
         self
     }
 
     pub fn with_avoid_host(mut self, avoid_host: i32) -> Self {
-        self.avoid_host = Some(avoid_host);
+        self.server.avoid_host = Some(avoid_host);
         self
     }
 
     pub fn with_host(mut self, host: i32) -> Self {
-        self.host = Some(host);
+        self.server.host = Some(host);
         self
     }
 
     pub fn with_boot_order(mut self, boot_order: String) -> Self {
-        self.boot_order = Some(boot_order);
+        self.server.boot_order = Some(boot_order);
         self
     }
 
     pub fn with_firewall(mut self, firewall: String) -> Self {
-        self.firewall = Some(firewall);
+        self.server.firewall = Some(firewall);
         self
     }
 
     pub fn with_labels(mut self, labels: Vec<Label>) -> Self {
-        self.labels = Some(labels);
+        self.server.labels = Some(labels);
         self
     }
 
-    pub fn with_metadata(mut self, metadata: String) -> Self {
-        self.metadata = Some(metadata);
+    pub fn with_metadata(mut self, metadata: impl Into<String>) -> Self {
+        self.server.metadata = Some(metadata.into());
         self
     }
 
     pub fn with_nic_model(mut self, nic_model: String) -> Self {
-        self.nic_model = Some(nic_model);
+        self.server.nic_model = Some(nic_model);
         self
     }
 
     pub fn with_password_delivery(mut self, password_delivery: String) -> Self {
-        self.password_delivery = Some(password_delivery);
+        self.server.password_delivery = Some(password_delivery);
         self
     }
 
     pub fn with_server_group(mut self, server_group: String) -> Self {
-        self.server_group = Some(server_group);
+        self.server.server_group = Some(server_group);
         self
     }
 
     pub fn with_simple_backup(mut self, simple_backup: String) -> Self {
-        self.simple_backup = Some(simple_backup);
+        self.server.simple_backup = Some(simple_backup);
         self
     }
 
     pub fn with_timezone(mut self, timezone: String) -> Self {
-        self.timezone = Some(timezone);
+        self.server.timezone = Some(timezone);
         self
     }
 
     pub fn with_video_model(mut self, video_model: String) -> Self {
-        self.video_model = Some(video_model);
+        self.server.video_model = Some(video_model);
         self
     }
 
@@ -338,15 +338,26 @@ impl CreateServerRequest {
         access_type: Option<String>,
         password: Option<String>,
     ) -> Self {
-        self.remote_access_enabled = Some(enabled);
-        self.remote_access_type = access_type;
-        self.remote_access_password = password;
+        self.server.remote_access_enabled = Some(enabled);
+        self.server.remote_access_type = access_type;
+        self.server.remote_access_password = password;
         self
     }
 
-    pub fn build(self) -> CreateServerRequestWrapper {
-        CreateServerRequestWrapper {
-            server: self
+    pub fn build(mut self) -> CreateServerRequest {
+        // By default, we only have an interface with a public IP address
+        if self.server.networking.is_none() {
+            self.server.networking = Some(
+                CreateServerNetworking::new()
+                    .with_interface(
+                        CreateServerInterface::new("public")
+                            .with_ip_address("IPv4", None)
+                            .with_index(1)
+                    )
+            );
+        }
+        CreateServerRequest {
+            server: self.server
         }
     }
 }
@@ -373,6 +384,14 @@ impl CreateServerStorageDevice {
             storage: storage.into(),
             ..Default::default()
         }
+    }
+
+    pub fn from_template(template_uuid: impl Into<String>) -> Self {
+        Self::new(
+            CREATE_SERVER_STORAGE_DEVICE_ACTION_CLONE.to_string(),
+            template_uuid.into()
+        )
+            .with_title("System Disk")
     }
 
     pub fn with_size(mut self, size: i32) -> Self {
@@ -460,8 +479,15 @@ impl LoginUser {
         }
     }
 
-    pub fn with_ssh_keys(mut self, keys: Vec<String>) -> Self {
-        self.ssh_keys = Some(SSHKey { ssh_key: keys });
+    pub fn with_ssh_key(self, key: impl Into<String>) -> Self {
+        self.with_ssh_keys(vec![key.into()])
+    }
+
+    pub fn with_ssh_keys(mut self, keys: impl Into<Vec<String>>) -> Self {
+        match &mut self.ssh_keys {
+            Some(ssh_keys) => ssh_keys.ssh_key.extend(keys.into()),
+            None => self.ssh_keys = Some(SSHKey { ssh_key: keys.into() }),
+        }
         self
     }
 
@@ -560,5 +586,55 @@ where
         Some(true) => serializer.serialize_str("yes"),
         Some(false) => serializer.serialize_str("no"),
         None => serializer.serialize_none(),
+    }
+}
+
+// Add these builder implementations
+impl CreateServerNetworking {
+    pub fn new() -> Self {
+        Self {
+            interfaces: InterfaceWrapper { interface: Vec::new() }
+        }
+    }
+
+    pub fn with_interface(mut self, interface: CreateServerInterface) -> Self {
+        self.interfaces.interface.push(interface);
+        self
+    }
+}
+
+impl CreateServerInterface {
+    pub fn new(interface_type: impl Into<String>) -> Self {
+        Self {
+            ip_addresses: IPAddressWrapper { ip_address: Vec::new() },
+            interface_type: interface_type.into(),
+            network: None,
+            source_ip_filtering: None,
+            bootable: None,
+            index: None,
+        }
+    }
+
+    pub fn with_ip_address(mut self, family: impl Into<String>, address: Option<String>) -> Self {
+        self.ip_addresses.ip_address.push(CreateServerIPAddress {
+            family: Some(family.into()),
+            address,
+        });
+        self
+    }
+
+    pub fn with_source_ip_filtering(mut self, enabled: bool) -> Self {
+        self.source_ip_filtering = Some(if enabled { "yes" } else { "no" }.to_string());
+        self
+    }
+
+    pub fn with_bootable(mut self, bootable: bool) -> Self {
+        self.bootable = Some(if bootable { "yes" } else { "no" }.to_string());
+        self
+    }
+
+    pub fn with_index(mut self, index: i32) -> Self {
+        self.index = Some(index);
+        self
     }
 }
