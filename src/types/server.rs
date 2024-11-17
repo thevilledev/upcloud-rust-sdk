@@ -139,13 +139,6 @@ pub struct ServerStorageDevice {
     pub boot_disk: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BackupRule {
-    pub interval: String,
-    pub time: String,
-    pub retention: i32,
-}
-
 #[derive(Debug, Serialize, Deserialize)]    
 pub struct NetworkInterface {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -363,6 +356,7 @@ impl CreateServerRequest {
 pub struct CreateServerStorageDevice {
     pub action: String,
     pub address: Option<String>,
+    #[serde(serialize_with = "serialize_bool_as_yes_no", deserialize_with = "deserialize_yes_no_as_bool")]
     pub encrypted: Option<bool>,
     pub storage: String,
     pub title: Option<String>,
@@ -371,7 +365,41 @@ pub struct CreateServerStorageDevice {
     pub tier: Option<String>,
     #[serde(rename = "type")]
     pub storage_type: Option<String>,
-    pub backup_rule: Option<BackupRule>,
+}
+
+impl CreateServerStorageDevice {
+    pub fn new(action: impl Into<String>, storage: impl Into<String>) -> Self {
+        Self {
+            action: action.into(),
+            storage: storage.into(),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_size(mut self, size: i32) -> Self {
+        self.size = Some(size);
+        self
+    }
+
+    pub fn with_tier(mut self, tier: impl Into<String>) -> Self {
+        self.tier = Some(tier.into());
+        self
+    }
+
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+
+    pub fn with_encrypted(mut self, encrypted: bool) -> Self {
+        self.encrypted = Some(encrypted);
+        self
+    }
+
+    pub fn with_address(mut self, address: impl Into<String>) -> Self {
+        self.address = Some(address.into());
+        self
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -498,4 +526,15 @@ where
 {
     let s = String::deserialize(deserializer)?;
     Ok(s == "yes")
+}
+
+fn serialize_bool_as_yes_no<S>(value: &Option<bool>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(true) => serializer.serialize_str("yes"),
+        Some(false) => serializer.serialize_str("no"),
+        None => serializer.serialize_none(),
+    }
 }

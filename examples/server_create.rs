@@ -16,14 +16,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_hostname("test-server.example.com".to_string())
         .with_zone("fi-hel1".to_string())
         .with_plan("1xCPU-2GB".to_string())
-        .with_storage_device(CreateServerStorageDevice {
-            action: CREATE_SERVER_STORAGE_DEVICE_ACTION_CREATE.to_string(),
-            storage: "01000000-0000-4000-8000-000030060200".to_string(),
-            size: Some(20),
-            tier: Some("maxiops".to_string()),
-            title: Some("System Disk".to_string()),
-            ..Default::default()
-        })
+        .with_storage_device(CreateServerStorageDevice::new(
+            CREATE_SERVER_STORAGE_DEVICE_ACTION_CLONE.to_string(),
+            "01000000-0000-4000-8000-000020070100".to_string())
+                .with_size(20)
+                .with_tier("maxiops")
+                .with_title("System Disk")
+                .with_encrypted(true)
+        )
         .with_networking(CreateServerNetworking {
             interfaces: InterfaceWrapper {
                 interface: vec![CreateServerInterface {
