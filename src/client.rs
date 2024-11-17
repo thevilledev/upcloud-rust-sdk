@@ -66,11 +66,9 @@ impl Client {
 
         if let Some(body) = body {
             builder = builder.json(body);
-            println!("BODY: {:?}", body);
         }
 
         let response = builder.send().await?;
-        println!("RESPONSE: {:?}", response);
         
         if !response.status().is_success() {
             return Err(Error::ApiError {

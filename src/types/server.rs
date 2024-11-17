@@ -26,24 +26,32 @@ pub const CREATE_SERVER_STORAGE_DEVICE_ACTION_CLONE: &str = "clone";
 pub const CREATE_SERVER_STORAGE_DEVICE_ACTION_ATTACH: &str = "attach";
 
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ServerResponse {
+#[derive(Debug, Deserialize)]
+pub struct GetServerResponse {
     pub servers: ServerList,
 }
 
-pub struct ServerRequest {
-    pub server: Vec<Server>,
+#[derive(Debug, Deserialize)]
+pub struct GetServerDetailsResponse {
+    pub server: ServerDetails,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
+pub struct CreateServerResponse {
+    pub server: ServerDetails,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct ServerList {
     pub server: Vec<Server>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Server {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub core_number: Option<String>,
-    pub created: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created: Option<i64>,
     pub host: i64,
     pub hostname: String,
     #[serde(default)]
@@ -64,38 +72,25 @@ pub struct Server {
     pub zone: String,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct ServerDetails {
+    #[serde(flatten)]
+    pub server: Server,
     pub boot_order: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", serialize_with = "serialize_optional_number_as_string")]
-    pub core_number: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub firewall: Option<String>,
-    pub hostname: String,
     #[serde(rename = "ip_addresses")]
-    pub ip_addresses: IPAddressWrapper,
-    pub license: Option<f64>,
-    #[serde(serialize_with = "serialize_number_as_string")]
-    pub memory_amount: i32,
+    pub ip_addresses: Option<IPAddressWrapper>,
+    pub networking: Option<CreateServerNetworking>,
     pub nic_model: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
-    pub plan: Option<String>,
-    pub plan_ipv4_bytes: Option<String>,
-    pub plan_ipv6_bytes: Option<String>,
-    pub simple_backup: Option<String>,
-    pub state: Option<String>,
-    #[serde(rename = "storage_devices")]
-    pub storage_devices: StorageDeviceListWrapper,
-    pub tags: TagWrapper,
-    pub timezone: Option<String>,
-    pub title: Option<String>,
-    pub uuid: String,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "storage_devices")]
+    pub storage_devices: Option<StorageDeviceListWrapper>,
     pub video_model: Option<String>,
-    #[serde(serialize_with = "serialize_bool_as_yes_no")]
+    #[serde(serialize_with = "serialize_bool_as_yes_no", deserialize_with = "deserialize_yes_no_as_bool")]
     pub remote_access_enabled: bool,
-    pub remote_access_password: Option<String>,
-    pub zone: String,
+    pub remote_access_password: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -107,19 +102,6 @@ impl Default for StorageDeviceListWrapper {
     fn default() -> Self {
         Self {
             storage_device: Vec::new()
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TagWrapper {
-    pub tag: Vec<String>,
-}
-
-impl Default for TagWrapper {
-    fn default() -> Self {
-        Self {
-            tag: Vec::new()
         }
     }
 }
@@ -392,17 +374,17 @@ pub struct CreateServerStorageDevice {
     pub backup_rule: Option<BackupRule>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateServerNetworking {
     pub interfaces: InterfaceWrapper,
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct InterfaceWrapper {
     pub interface: Vec<CreateServerInterface>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateServerInterface {
     pub ip_addresses: IPAddressWrapper,
     #[serde(rename = "type")]
@@ -453,10 +435,20 @@ pub struct StartServerRequest {
     pub avoid_host: Option<i32>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct StartServerResponse {
+    pub server: ServerDetails,
+}
+
 #[derive(Debug, Serialize)]
 pub struct StopServerRequest {
     pub stop_type: Option<String>,
     pub timeout: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StopServerResponse {
+    pub server: ServerDetails,
 }
 
 #[derive(Debug, Serialize)]
@@ -467,6 +459,11 @@ pub struct RestartServerRequest {
     pub host: Option<i32>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RestartServerResponse {
+    pub server: ServerDetails,
+}
+
 #[derive(Debug, Serialize)]
 pub struct ModifyServerRequest {
     pub boot_order: Option<String>,
@@ -475,6 +472,11 @@ pub struct ModifyServerRequest {
     pub title: Option<String>,
     pub zone: Option<String>,
     // Add other fields as needed
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ModifyServerResponse {
+    pub server: ServerDetails,
 }
 
 #[derive(Debug, Serialize)]
@@ -490,28 +492,10 @@ impl Default for StorageDeviceWrapper {
     }
 }
 
-// Add these serializer helper functions
-fn serialize_number_as_string<S>(num: &i32, serializer: S) -> Result<S::Ok, S::Error>
+fn deserialize_yes_no_as_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
-    S: serde::Serializer,
+    D: serde::Deserializer<'de>,
 {
-    serializer.serialize_str(&num.to_string())
-}
-
-fn serialize_bool_as_yes_no<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    serializer.serialize_str(if *value { "yes" } else { "no" })
-}
-
-// Add this new serializer function
-fn serialize_optional_number_as_string<S>(num: &Option<i32>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    match num {
-        Some(n) => serializer.serialize_str(&n.to_string()),
-        None => serializer.serialize_none(),
-    }
+    let s = String::deserialize(deserializer)?;
+    Ok(s == "yes")
 }

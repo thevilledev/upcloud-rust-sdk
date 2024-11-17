@@ -8,41 +8,71 @@ use tokio::time::sleep;
 use std::time::Duration;
 impl Client {
 
-    pub async fn get_servers(&self) -> Result<ServerResponse, Error> {
+    pub async fn get_servers(&self) -> Result<ServerList, Error> {
         let response = self.get("/server").await?;
-        Ok(serde_json::from_str(&response)?)
+
+        #[cfg(debug_assertions)]
+        println!("get_servers response body: {:?}", response);
+
+        let details: GetServerResponse = serde_json::from_str(&response)?;
+        Ok(details.servers)
     }
 
     pub async fn get_server_details(&self, uuid: &str) -> Result<ServerDetails, Error> {
         let response = self.get(&format!("/server/{}", uuid)).await?;
-        Ok(serde_json::from_str(&response)?)
+
+        #[cfg(debug_assertions)]
+        println!("get_server_details response body: {:?}", response);
+
+        let details: GetServerDetailsResponse = serde_json::from_str(&response)?;
+        Ok(details.server)
     }
 
     // Add other server-related methods here
 
-    pub async fn create_server(&self, request: &CreateServerRequestWrapper) -> Result<String, Error> {
+    pub async fn create_server(&self, request: &CreateServerRequestWrapper) -> Result<ServerDetails, Error> {
         let response = self.post("/server", Some(request)).await?;
-        let details: ServerDetails = serde_json::from_str(&response)?;
-        Ok(details.uuid)
+
+        #[cfg(debug_assertions)]
+        println!("create_server response body: {:?}", response);
+
+        let create_response: CreateServerResponse = serde_json::from_str(&response)?;
+        Ok(create_response.server)
     }
 
-    pub async fn start_server(&self, uuid: &str, request: &StartServerRequest) -> Result<ServerDetails, Error> {
+    pub async fn start_server(&self, uuid: &str, request: &StartServerRequest) -> Result<StartServerResponse, Error> {
         let response = self.post(&format!("/server/{}/start", uuid), Some(request)).await?;
+
+        #[cfg(debug_assertions)]
+        println!("start_server response body: {:?}", response);
+
         Ok(serde_json::from_str(&response)?)
     }
 
-    pub async fn stop_server(&self, uuid: &str, request: &StopServerRequest) -> Result<ServerDetails, Error> {
+    pub async fn stop_server(&self, uuid: &str, request: &StopServerRequest) -> Result<StopServerResponse, Error> {
         let response = self.post(&format!("/server/{}/stop", uuid), Some(request)).await?;
+
+        #[cfg(debug_assertions)]
+        println!("stop_server response body: {:?}", response);
+
         Ok(serde_json::from_str(&response)?)
     }
 
-    pub async fn restart_server(&self, uuid: &str, request: &RestartServerRequest) -> Result<ServerDetails, Error> {
+    pub async fn restart_server(&self, uuid: &str, request: &RestartServerRequest) -> Result<RestartServerResponse, Error> {
         let response = self.post(&format!("/server/{}/restart", uuid), Some(request)).await?;
+
+        #[cfg(debug_assertions)]
+        println!("restart_server response body: {:?}", response);
+
         Ok(serde_json::from_str(&response)?)
     }
 
-    pub async fn modify_server(&self, uuid: &str, request: &ModifyServerRequest) -> Result<ServerDetails, Error> {
+    pub async fn modify_server(&self, uuid: &str, request: &ModifyServerRequest) -> Result<ModifyServerResponse, Error> {
         let response = self.put(&format!("/server/{}", uuid), Some(request)).await?;
+
+        #[cfg(debug_assertions)]
+        println!("modify_server response body: {:?}", response);
+
         Ok(serde_json::from_str(&response)?)
     }
 
@@ -69,17 +99,17 @@ impl Client {
         timeout: Duration,
     ) -> Result<ServerDetails, Error> {
         let start = std::time::Instant::now();
-        
+
         loop {
             if start.elapsed() > timeout {
                 return Err(Error::Timeout);
             }
 
-            let details = self.get_server_details(uuid).await?;
+            let res = self.get_server_details(uuid).await?;
 
             match (desired_state, undesired_state) {
-                (Some(desired), _) if details.state.as_deref() == Some(desired) => return Ok(details),
-                (_, Some(undesired)) if details.state.as_deref() != Some(undesired) => return Ok(details),
+                (Some(desired), _) if res.server.state == desired => return Ok(res),
+                (_, Some(undesired)) if res.server.state != undesired => return Ok(res),
                 _ => {
                     sleep(Duration::from_secs(5)).await;
                     continue;

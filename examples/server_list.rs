@@ -10,6 +10,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Get servers
     let servers = client.get_servers().await?;
+
+    #[cfg(debug_assertions)]
     println!("{:?}", servers);
 
     Ok(())
