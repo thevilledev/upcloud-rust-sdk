@@ -1,4 +1,4 @@
-use upcloud_rust_sdk::client::Client;
+use upcloud_rust_sdk::{client::Client, resources::server::ServerOperations};
 use upcloud_rust_sdk::types::server::*;
 
 // Remember to define UPCLOUD_USERNAME and UPCLOUD_PASSWORD environment variables

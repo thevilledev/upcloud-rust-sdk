@@ -1,4 +1,4 @@
-use upcloud_rust_sdk::client::Client;
+use upcloud_rust_sdk::{client::Client, resources::server::ServerOperations};
 use upcloud_rust_sdk::types::server::*;
 use std::time::Duration;
 
@@ -43,6 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .with_index(2)
                 )
         )
+        .with_metadata("yes")
         .build();
 
     #[cfg(debug_assertions)]

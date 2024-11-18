@@ -1,4 +1,4 @@
-use upcloud_rust_sdk::client::Client;
+use upcloud_rust_sdk::{client::Client, resources::server::ServerOperations};
 
 // Remember to define UPCLOUD_USERNAME and UPCLOUD_PASSWORD environment variables
 
@@ -6,11 +6,17 @@ use upcloud_rust_sdk::client::Client;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new()?;
 
-    // Get servers
-    let servers = client.get_servers().await?;
+    // List servers
+    let servers = client.list_servers().await?;
 
     #[cfg(debug_assertions)]
     println!("{:?}", servers);
+
+    // Get specific server
+    let server = client.get_server(&servers.server[0].uuid).await?;
+
+    #[cfg(debug_assertions)]
+    println!("{:?}", server);
 
     Ok(())
 }
