@@ -52,17 +52,21 @@ pub struct Server {
     pub core_number: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created: Option<i64>,
+    #[serde(default)]
     pub host: i64,
     pub hostname: String,
-    #[serde(default)]
-    pub labels: Labels,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub labels: Option<Labels>,
     pub license: f64,
     pub memory_amount: String,
     pub plan: String,
+    #[serde(default)]
     pub plan_ipv4_bytes: String,
+    #[serde(default)]
     pub plan_ipv6_bytes: String,
     #[serde(default)]
     pub server_group: Option<String>,
+    #[serde(default)]
     pub simple_backup: String,
     pub state: String,
     #[serde(default)]
@@ -176,7 +180,7 @@ pub struct ServerRequest {
     pub firewall: Option<String>,
     pub hostname: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub labels: Option<Vec<Label>>,
+    pub labels: Option<Labels>,
     pub login_user: LoginUser,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub memory_amount: Option<i32>,
@@ -292,7 +296,7 @@ impl CreateServerRequest {
         self
     }
 
-    pub fn with_labels(mut self, labels: Vec<Label>) -> Self {
+    pub fn with_labels(mut self, labels: Labels) -> Self {
         self.server.labels = Some(labels);
         self
     }

@@ -110,3 +110,34 @@ impl ServerOperations for Client {
         }
     }
 }
+
+#[tokio::test]
+async fn test_list_servers() {
+    use crate::config;
+
+    let mut server = mockito::Server::new_async().await;
+    let url = server.url();
+    let _mock = server.mock("GET", "/1.3/server")
+        .with_status(200)
+        .with_body(r#"{"servers":{"server":[{"core_number":"1","hostname":"fi.example.com","labels":{"label":[{"key":"env","value":"prod"}]},"license":0,"memory_amount":"2048","plan":"1xCPU-2GB","plan_ivp4_bytes":"34253332","plan_ipv6_bytes":"0","state":"started","tags":{"tag":["PROD","CentOS"]},"title":"Helsinki server","uuid":"00798b85-efdc-41ca-8021-f6ef457b8531","zone":"fi-hel1"},{"core_number":"1","hostname":"uk.example.com","labels":{"label":[]},"license":0,"memory_amount":"512","plan":"custom","state":"stopped","tags":{"tag":["DEV","Ubuntu"]},"title":"London server","uuid":"009d64ef-31d1-4684-a26b-c86c955cbf46","zone":"uk-lon1"}]}}"#)
+        .create();
+
+    let client = Client::with_config(
+        config::Config::new("foo", "bar")
+            .with_base_url(url)
+    ).unwrap();
+
+    
+    let result = client.list_servers().await.unwrap();
+    assert_eq!(result.server.len(), 2);
+    assert_eq!(result.server[0].uuid, "00798b85-efdc-41ca-8021-f6ef457b8531");
+    assert_eq!(result.server[0].title, "Helsinki server");
+}
+
+// TODO: Add test for get_server
+#[tokio::test]
+async fn test_get_server() {}
+
+// TODO: Add test for create_server
+#[tokio::test]
+async fn test_create_server() {}
