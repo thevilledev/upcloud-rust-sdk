@@ -1,5 +1,14 @@
-use upcloud_rust_sdk::{client::Client, resources::server::ServerOperations};
-use upcloud_rust_sdk::types::server::*;
+use upcloud_rust_sdk::{
+    config::Config,
+    client::Client,
+    resources::server::ServerOperations,
+    error::Error,
+    types::server::*,
+};
+
+use std::sync::Arc;
+use reqwest::ClientBuilder;
+
 use std::time::Duration;
 
 // Remember to define UPCLOUD_USERNAME and UPCLOUD_PASSWORD environment variables
@@ -10,7 +19,21 @@ pub const SSH_KEY: &str = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINVn5Alm7dObCxo7Z
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new()?;
+    let config = Config::new(
+        std::env::var("UPCLOUD_USERNAME")
+            .map_err(|_| Error::ConfigError("UPCLOUD_USERNAME environment variable not set".to_string()))?,
+        std::env::var("UPCLOUD_PASSWORD")
+            .map_err(|_| Error::ConfigError("UPCLOUD_PASSWORD environment variable not set".to_string()))?
+    )
+        .with_timeout(Duration::from_secs(10))
+        .with_http_client_hook(Arc::new(|builder: ClientBuilder| {
+            builder
+                .tcp_keepalive(Duration::from_secs(60))
+                .pool_max_idle_per_host(10)
+                .https_only(true)
+        }));
+
+    let client = Client::with_config(config)?;
 
     // Create a new server
     let create_request = CreateServerRequest::new()

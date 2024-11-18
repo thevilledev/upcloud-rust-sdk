@@ -1,11 +1,15 @@
 use std::time::Duration;
+use reqwest::ClientBuilder;
+use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Config {
     pub username: String,
     pub password: String,
     pub base_url: Option<String>,
     pub timeout: Option<Duration>,
+    pub http_client_hook: Option<Arc<dyn Fn(ClientBuilder) -> ClientBuilder + Send + Sync>>,
+
 }
 
 impl Config {
@@ -15,6 +19,7 @@ impl Config {
             password: password.into(),
             base_url: None,
             timeout: None,
+            http_client_hook: None,
         }
     }
 
@@ -25,6 +30,11 @@ impl Config {
 
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.timeout = Some(timeout);
+        self
+    }
+
+    pub fn with_http_client_hook(mut self, hook: Arc<dyn Fn(ClientBuilder) -> ClientBuilder + Send + Sync>) -> Self {
+        self.http_client_hook = Some(hook);
         self
     }
 }

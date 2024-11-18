@@ -3,6 +3,7 @@ use reqwest::Client as ReqwestClient;
 use crate::constants::{API_BASE_URL, API_VERSION, VERSION};
 use crate::config::Config;
 use crate::error::Error;
+
 pub struct Client {
     config: Config,
     client: ReqwestClient,
@@ -25,6 +26,10 @@ impl Client {
 
         if let Some(timeout) = config.timeout {
             client_builder = client_builder.timeout(timeout);
+        }
+
+        if let Some(hook) = config.http_client_hook.as_ref() {
+            client_builder = hook(client_builder);
         }
 
         let client = client_builder.build()?;
