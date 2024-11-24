@@ -1,5 +1,8 @@
 # upcloud-rust-sdk
 
+[<img alt="crates.io" src="https://img.shields.io/crates/v/upcloud-sdk.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/upcloud-sdk)
+[<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-upcloud--sdk-8a2be2?style=for-the-badge&logo=docs.rs" height="20">](https://docs.rs/upcloud-sdk)
+
 Unofficial UpCloud API client for Rust.
 
 ## Features
