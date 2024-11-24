@@ -1,4 +1,4 @@
-use upcloud_rust_sdk::{
+use upcloud_sdk::{
     client::Client,
     resources::server::ServerOperations,
     types::common::LabelFilter
