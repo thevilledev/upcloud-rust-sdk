@@ -1,9 +1,9 @@
 use upcloud_rust_sdk::{
-    config::Config,
     client::Client,
-    resources::server::ServerOperations,
+    config::Config,
     error::Error,
-    types::server::*,
+    resources::server::ServerOperations,
+    types::{common::Labels, server::*}
 };
 
 use std::sync::Arc;
@@ -65,6 +65,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .with_ip_address("IPv4", None)
                         .with_index(2)
                 )
+        )
+        .with_labels(
+            Labels::new()
+                .with("env", "prod")
         )
         .with_metadata("yes")
         .build();

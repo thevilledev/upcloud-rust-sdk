@@ -26,3 +26,42 @@ impl Labels {
 pub struct Tags {
     pub tag: Vec<String>,
 }
+
+// Add this new struct
+#[derive(Debug, Default)]
+pub struct LabelFilter {
+    labels: Vec<String>,
+}
+
+impl LabelFilter {
+    pub fn new() -> Self {
+        Self { labels: Vec::new() }
+    }
+
+    pub fn with(mut self, key: &str, value: &str) -> Self {
+        self.labels.push(format!("{}={}", key, value));
+        self
+    }
+
+    pub fn add_label(&mut self, key: &str) -> &mut Self {
+        self.labels.push(key.to_string());
+        self
+    }
+
+    pub fn add_label_value(&mut self, key: &str, value: &str) -> &mut Self {
+        self.labels.push(format!("{}={}", key, value));
+        self
+    }
+
+    pub fn to_query_params(&self) -> String {
+        if self.labels.is_empty() {
+            String::new()
+        } else {
+            self.labels
+                .iter()
+                .map(|l| format!("label={}", urlencoding::encode(l)))
+                .collect::<Vec<_>>()
+                .join("&")
+        }
+    }
+}

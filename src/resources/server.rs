@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use crate::{
     error::Error,
     types::server::*,
+    types::common::LabelFilter,
     client::Client,
 };
 
@@ -19,6 +20,7 @@ pub trait ServerOperations {
     async fn modify_server(&self, uuid: &str, request: &ModifyServerRequest) -> Result<ModifyServerResponse, Error>;
     async fn delete_server(&self, uuid: &str) -> Result<(), Error>;
     async fn delete_server_and_storages(&self, uuid: &str, delete_backups: bool) -> Result<(), Error>;
+    async fn list_servers_by_labels(&self, filter: &LabelFilter) -> Result<ServerList, Error>;
     async fn wait_for_server_state(
         &self,
         uuid: &str,
@@ -32,6 +34,19 @@ pub trait ServerOperations {
 impl ServerOperations for Client {
     async fn list_servers(&self) -> Result<ServerList, Error> {
         let response = self.get("/server").await?;
+        let details: GetServerResponse = serde_json::from_str(&response)?;
+        Ok(details.servers)
+    }
+
+    async fn list_servers_by_labels(&self, filter: &LabelFilter) -> Result<ServerList, Error> {
+        let query = filter.to_query_params();
+        let path = if query.is_empty() {
+            "/server".to_string()
+        } else {
+            format!("/server?{}", query)
+        };
+
+        let response = self.get(&path).await?;
         let details: GetServerResponse = serde_json::from_str(&response)?;
         Ok(details.servers)
     }
