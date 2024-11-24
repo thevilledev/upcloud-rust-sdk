@@ -1,12 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::types::common::{Labels, Label, Tags};
 
-// Add these new constants
-pub const SERVER_STATE_STARTED: &str = "started";
-pub const SERVER_STATE_STOPPED: &str = "stopped";
-pub const SERVER_STATE_MAINTENANCE: &str = "maintenance";
-pub const SERVER_STATE_ERROR: &str = "error";
-
 pub const VIDEO_MODEL_VGA: &str = "vga";
 pub const VIDEO_MODEL_CIRRUS: &str = "cirrus";
 
@@ -25,6 +19,23 @@ pub const CREATE_SERVER_STORAGE_DEVICE_ACTION_CREATE: &str = "create";
 pub const CREATE_SERVER_STORAGE_DEVICE_ACTION_CLONE: &str = "clone";
 pub const CREATE_SERVER_STORAGE_DEVICE_ACTION_ATTACH: &str = "attach";
 
+pub enum ServerState {
+    Started,
+    Stopped,
+    Maintenance,
+    Error,
+}
+
+impl ServerState {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Started => "started",
+            Self::Stopped => "stopped",
+            Self::Maintenance => "maintenance",
+            Self::Error => "error",
+        }
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct GetServerResponse {
@@ -41,12 +52,12 @@ pub struct CreateServerResponse {
     pub server: ServerDetails,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ServerList {
     pub server: Vec<Server>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Clone, Deserialize)]
 pub struct Server {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub core_number: Option<String>,
@@ -76,7 +87,7 @@ pub struct Server {
     pub zone: String,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ServerDetails {
     #[serde(flatten)]
     pub server: Server,
@@ -97,7 +108,7 @@ pub struct ServerDetails {
     pub remote_access_password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct StorageDeviceListWrapper {
     pub storage_device: Vec<ServerStorageDevice>,
 }
@@ -122,7 +133,7 @@ pub struct IPAddress {
     pub network: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct ServerStorageDevice {
     pub address: String,
     #[serde(rename = "part_of_plan")]
@@ -424,17 +435,17 @@ impl CreateServerStorageDevice {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct CreateServerNetworking {
     pub interfaces: InterfaceWrapper,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Clone, Deserialize)]
 pub struct InterfaceWrapper {
     pub interface: Vec<CreateServerInterface>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct CreateServerInterface {
     pub ip_addresses: IPAddressWrapper,
     #[serde(rename = "type")]
@@ -449,13 +460,13 @@ pub struct CreateServerInterface {
     pub index: Option<i32>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct CreateServerIPAddress {
     pub family: Option<String>,
     pub address: Option<String>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct IPAddressWrapper {
     pub ip_address: Vec<CreateServerIPAddress>,
 }

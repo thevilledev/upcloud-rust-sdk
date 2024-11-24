@@ -28,7 +28,8 @@ See the following:
 
 ## TODO
 
-- Everything else than Cloud Servers
+- Add support to other resources than Cloud Servers
+- Request/response serialisation/deserialisation improvements
 - Error handling
 - Documentation
 - Release process

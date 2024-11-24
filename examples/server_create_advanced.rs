@@ -84,7 +84,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Wait for server to start
     let _ = client.wait_for_server_state(
         &res.server.uuid,
-        Some(SERVER_STATE_STARTED),
+        Some(&ServerState::Started),
         None,
         Duration::from_secs(300)
     ).await?;

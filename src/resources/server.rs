@@ -9,6 +9,10 @@ use crate::{
 
 use tokio::time::{sleep, Duration};
 
+/// Operations for managing cloud servers.
+///
+/// This trait provides methods for creating, modifying, and managing cloud servers
+/// through the UpCloud API.
 #[async_trait]
 pub trait ServerOperations {
     async fn list_servers(&self) -> Result<ServerList, Error>;
@@ -24,8 +28,8 @@ pub trait ServerOperations {
     async fn wait_for_server_state(
         &self,
         uuid: &str,
-        desired_state: Option<&str>,
-        undesired_state: Option<&str>,
+        desired_state: Option<&ServerState>,
+        undesired_state: Option<&ServerState>,
         timeout: Duration,
     ) -> Result<ServerDetails, Error>;
 }
@@ -101,8 +105,8 @@ impl ServerOperations for Client {
     async fn wait_for_server_state(
         &self,
         uuid: &str,
-        desired_state: Option<&str>,
-        undesired_state: Option<&str>,
+        desired_state: Option<&ServerState>,
+        undesired_state: Option<&ServerState>,
         timeout: Duration,
     ) -> Result<ServerDetails, Error> {
         let start = std::time::Instant::now();
@@ -115,8 +119,8 @@ impl ServerOperations for Client {
             let res = self.get_server(uuid).await?;
 
             match (desired_state, undesired_state) {
-                (Some(desired), _) if res.server.state == desired => return Ok(res),
-                (_, Some(undesired)) if res.server.state != undesired => return Ok(res),
+                (Some(desired), _) if res.server.state == desired.as_str() => return Ok(res),
+                (_, Some(undesired)) if res.server.state != undesired.as_str() => return Ok(res),
                 _ => {
                     sleep(Duration::from_secs(5)).await;
                     continue;
